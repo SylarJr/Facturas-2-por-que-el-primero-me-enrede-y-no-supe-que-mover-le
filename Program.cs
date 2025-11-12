@@ -1,4 +1,5 @@
 using Facturas.Components;
+using Microsoft.Data.Sqlite;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,5 +25,18 @@ app.UseAntiforgery();
 app.MapStaticAssets();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
+
+String ruta = "mibase.db";
+
+using var conexion = new SqliteConnection($"Data Source={ruta}");
+conexion.Open();
+var comando = conexion.CreateCommand();
+comando.CommandText = @"
+create table if not exists
+facturas(identificador integer, nombre text, articulos text, precio interger, total interger, fecha date)
+";
+comando.ExecuteNonQuery();
+
+
 
 app.Run();
