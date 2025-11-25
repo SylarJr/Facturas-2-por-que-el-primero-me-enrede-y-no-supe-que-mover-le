@@ -1,4 +1,5 @@
 using Facturas.Components;
+using Facturas.Components.Data;
 using Microsoft.Data.Sqlite;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -6,6 +7,8 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+builder.Services.AddScoped<ServicioDeFacturas>();
 
 var app = builder.Build();
 
@@ -32,9 +35,14 @@ using var conexion = new SqliteConnection($"Data Source={ruta}");
 conexion.Open();
 var comando = conexion.CreateCommand();
 comando.CommandText = @"
-create table if not exists
-facturas(identificador integer, nombre text, articulos text, precio interger, total interger, fecha date)
-";
+    CREATE TABLE IF NOT EXISTS facturas (
+        identificador INTEGER PRIMARY KEY AUTOINCREMENT, 
+        nombre TEXT, 
+        articulos TEXT, 
+        precio INTEGER, 
+        total INTEGER, 
+        fecha TEXT
+    )";
 comando.ExecuteNonQuery();
 
 

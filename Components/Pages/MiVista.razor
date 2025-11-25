@@ -1,5 +1,121 @@
-﻿<h3>MiVista</h3>
+﻿@page "/MiVista"
+@rendermode InteractiveServer
+@using Facturas.Components.Data
+@inject ServicioDeFacturas FacturasService
+@inject NavigationManager NavManager
+
+<h3>Crear Nueva Factura</h3>
+
+<div class="card p-3">
+    <h4>Datos de la Factura</h4>
+    <div class="mb-3">
+        <label>Nombre del Cliente:</label>
+        <input class="form-control" @bind="facturaEnProceso.Nombre" placeholder="Ej: Juan Pérez" />
+    </div>
+
+    <div class="mb-3">
+        <label>Fecha:</label>
+        <input type="date" class="form-control" @bind="facturaEnProceso.Fecha" />
+    </div>
+
+    <hr />
+
+    <h4>Agregar Artículos</h4>
+    <div class="row g-3 align-items-end">
+        <div class="col-md-5">
+            <label>Nombre del Artículo:</label>
+            <input class="form-control" @bind="nuevoArticuloNombre" placeholder="Ej: Refresco" />
+        </div>
+        <div class="col-md-2">
+            <label>Cantidad:</label>
+            <input type="number" class="form-control" @bind="nuevoArticuloCantidad" min="1" />
+        </div>
+        <div class="col-md-3">
+            <label>Precio Unitario:</label>
+            <input type="number" class="form-control" @bind="nuevoArticuloPrecio" />
+        </div>
+        <div class="col-md-2">
+            <button class="btn btn-secondary w-100" @onclick="AgregarArticuloALista">Agregar</button>
+        </div>
+    </div>
+
+    <hr />
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Artículo</th>
+                <th>Cantidad</th>
+                <th>Precio Unitario</th>
+                <th>Subtotal</th> 
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in listaArticulosTemporales)
+            {
+                <tr>
+                    <td>@item.Nombre</td>
+                    <td>@item.Cantidad</td> 
+                    <td>$@item.Precio</td>
+                    <td><strong>$@item.Subtotal</strong></td> 
+                </tr>
+            }
+        </tbody>
+        <tfoot>
+            <tr>
+                <td colspan="3" class="text-end"><strong>TOTAL A PAGAR:</strong></td>
+                <td><strong>$@facturaEnProceso.total</strong></td>
+            </tr>
+        </tfoot>
+    </table>
+
+    <button class="btn btn-primary btn-lg mt-3" @onclick="GuardarEnBaseDeDatos">Guardar Factura</button>
+</div>
 
 @code {
+    Factura facturaEnProceso = new Factura { Fecha = DateTime.Now };
+    string nuevoArticuloNombre = "";
+    int nuevoArticuloPrecio = 0;
+    int nuevoArticuloCantidad = 1; 
 
+ 
+    class ItemTemporal
+    {
+        public string Nombre { get; set; }
+        public int Cantidad { get; set; } 
+        public int Precio { get; set; }
+        public int Subtotal => Cantidad * Precio; 
+    }
+
+    List<ItemTemporal> listaArticulosTemporales = new List<ItemTemporal>();
+
+    void AgregarArticuloALista()
+    {
+        if (!string.IsNullOrWhiteSpace(nuevoArticuloNombre) && nuevoArticuloPrecio > 0 && nuevoArticuloCantidad >= 1)
+        {
+            var nuevoItem = new ItemTemporal
+            {
+                Nombre = nuevoArticuloNombre,
+                Cantidad = nuevoArticuloCantidad,
+                Precio = nuevoArticuloPrecio,
+            };
+            listaArticulosTemporales.Add(nuevoItem);
+            facturaEnProceso.total += nuevoItem.Subtotal;
+
+            nuevoArticuloNombre = "";
+            nuevoArticuloPrecio = 0;
+            nuevoArticuloCantidad = 1; 
+        }
+    }
+
+    async Task GuardarEnBaseDeDatos()
+    {
+        facturaEnProceso.articulo = string.Join("; ", listaArticulosTemporales.Select(x => $"{x.Cantidad}x {x.Nombre} @ ${x.Precio}"));
+
+        await FacturasService.GuardarFactura(facturaEnProceso);
+
+
+        facturaEnProceso = new Factura { Fecha = DateTime.Now };
+        listaArticulosTemporales.Clear();
+    }
 }

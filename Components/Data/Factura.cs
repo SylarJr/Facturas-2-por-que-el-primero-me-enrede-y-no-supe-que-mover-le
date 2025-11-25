@@ -1,4 +1,5 @@
-﻿namespace Facturas.Components.Data
+﻿
+namespace Facturas.Components.Data
 {
     public class Factura
     {
@@ -13,6 +14,6 @@
 
         public int total { get; set; }
 
-        
+        public DateTime Fecha { get; set; }
     }
 }
